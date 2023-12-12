@@ -1,0 +1,69 @@
+{
+  "name": "@wmakeev/csv-transform",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Stream csv transformation",
+  "keywords": [
+    "csv",
+    "convert",
+    "transform",
+    "stream"
+  ],
+  "exports": "./build/src/index.js",
+  "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
+  "files": [
+    "build/src/"
+  ],
+  "scripts": {
+    "lint": "eslint . --fix",
+    "cleanup": "rm -rf build/",
+    "compile:dev": "tsc",
+    "compile": "tsc --build tsconfig.prod.json",
+    "build:dev": "npm run lint && npm run compile:dev",
+    "build": "npm run cleanup && npm run lint && npm run compile",
+    "test": "npm run build && node -r dotenv/config ./build/test/index.test.js",
+    "version": "auto-changelog -p && git add CHANGELOG.md",
+    "release": "np"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "quoteProps": "consistent",
+    "trailingComma": "none",
+    "arrowParens": "avoid"
+  },
+  "np": {
+    "yarn": false
+  },
+  "author": "Vitaliy V. Makeev",
+  "license": "ISC",
+  "devDependencies": {
+    "@tsconfig/node18": "^18.2.2",
+    "@tsconfig/strictest": "^2.0.2",
+    "@types/highland": "^2.12.20",
+    "@types/node": "^18.19.3",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "@typescript-eslint/typescript-estree": "^6.10.0",
+    "auto-changelog": "^2.4.0",
+    "csv-parse": "^5.5.3",
+    "dotenv": "^16.3.1",
+    "envalid": "^8.0.0",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
+    "typescript-eslint-language-service": "^5.0.5"
+  },
+  "dependencies": {
+    "@wmakeev/highland-tools": "^1.10.0",
+    "filtrex": "^3.0.0",
+    "highland": "^2.13.5"
+  }
+}
