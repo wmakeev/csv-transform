@@ -4,6 +4,7 @@ import {
   CsvTransfromOptions,
   DataRow,
   HeaderInfo,
+  IternalHeaderInfo,
   RowsTransformer
 } from './types.js'
 
@@ -19,49 +20,105 @@ export function transformCsvStream(
     dataRowTransforms: rowTransformsFactories
   } = config
 
-  let headerInfo: HeaderInfo[]
-  let isHeaderReordered = false
+  let headersInfo: HeaderInfo[]
+
+  /** Is source headers is reordered */
+  let isHeadersReordered = false
+
+  /** How many headers was added to row (negative value - headers was deleted) */
+  let additionHeadersAdded = 0
+
+  /** Is new headers was added to header row */
+  let isHeaderExtended = false
+
+  /** Is some headers is hidden (deleted in result output) */
+  let hasHiddenHeaders = false
 
   let rowsTransformer: RowsTransformer
-  let transformedHeaders: HeaderInfo[]
+  let transformedHeaders: IternalHeaderInfo[]
 
   let initialized = false
 
   /**
    * Initialize stream transform and return transformed header row
    *
-   * @param headerRow Header row
+   * @param srcHeaderRow Header row
    * @returns Transformed header
    */
-  const initStreamTransform = (headerRow: DataRow) => {
-    headerInfo = headerRow.flatMap((h, index) => {
+  const initStreamTransform = (srcHeaderRow: DataRow) => {
+    let lastColIndex = srcHeaderRow.length - 1
+
+    headersInfo = srcHeaderRow.flatMap((h, index) => {
       if (h === '' || h == null) return []
 
       return {
         srcIndex: index,
-        name: String(h)
+        name: String(h),
+        hidden: false
       }
     })
 
+    // Transform headers with headers transformers
     for (const headerTransform of headerTransforms) {
-      transformedHeaders = headerTransform(transformedHeaders ?? headerInfo)
+      transformedHeaders = headerTransform(
+        transformedHeaders ?? (headersInfo as IternalHeaderInfo[])
+      ) as IternalHeaderInfo[]
     }
 
-    if (transformedHeaders == null) transformedHeaders = headerInfo
+    // Set default headerInfo if no transforms
+    if (transformedHeaders == null) {
+      transformedHeaders = headersInfo as IternalHeaderInfo[]
+    }
 
-    isHeaderReordered = transformedHeaders!.every(
+    // Fill indexes for new columns
+    for (const h of transformedHeaders) {
+      if (h.srcIndex == null) h.srcIndex = ++lastColIndex
+      if (h.hidden) hasHiddenHeaders = true
+    }
+
+    isHeadersReordered = transformedHeaders.every(
       (h, index) => h.srcIndex !== index
     )
 
-    for (const rowTransformFactory of rowTransformsFactories) {
-      const prevRowsTransformer = rowsTransformer
-      const curRowTransformer = rowTransformFactory(transformedHeaders)
+    additionHeadersAdded = transformedHeaders.length - srcHeaderRow.length
 
-      rowsTransformer =
-        prevRowsTransformer == null
-          ? curRowTransformer
-          : (rowsChunk: DataRow[]) =>
-              curRowTransformer(prevRowsTransformer(rowsChunk))
+    isHeaderExtended = additionHeadersAdded > 0
+
+    const shouldRearrangeRow = isHeadersReordered || isHeaderExtended
+
+    /** Initialized rows transforms */
+    const rowTransforms = rowTransformsFactories.map(f => f(transformedHeaders))
+
+    rowsTransformer = rowsChunks => {
+      if (rowTransforms.length === 0) return rowsChunks
+
+      let transformedChunk: DataRow[] = rowsChunks
+
+      for (const rowTransform of rowTransforms) {
+        transformedChunk = rowTransform(transformedChunk)
+      }
+
+      if (shouldRearrangeRow === false) {
+        return transformedChunk
+      }
+
+      const rearrangedRowsChunk: DataRow[] = []
+
+      for (const row of transformedChunk) {
+        const rearrangedRow = []
+
+        for (const h of transformedHeaders) {
+          const val = row[h.srcIndex]
+
+          rearrangedRow.push(
+            typeof val === 'string' ? val : val == null ? '' : String(val)
+          )
+        }
+
+        rearrangedRowsChunk.push(rearrangedRow)
+      }
+
+      return rearrangedRowsChunk
     }
 
     if (rowsTransformer == null) rowsTransformer = rows => rows
@@ -69,78 +126,90 @@ export function transformCsvStream(
     initialized = true
 
     const result = [...transformedHeaders]
-      .sort((a, b) => a.srcIndex - b.srcIndex)
+      .filter(it => it.hidden === false)
       .map(it => it.name) as DataRow
+
+    if (result.length === 0) {
+      throw new Error('All headers is deleted - nothing to transform')
+    }
 
     return result
   }
 
-  return rowsChunks$
-    .consume<DataRow[]>((err, it, push, next) => {
-      // Error
-      if (err != null) {
-        // pass errors along the stream and consume next value
-        push(err)
+  return rowsChunks$.consume<DataRow[]>((err, it, push, next) => {
+    // Error
+    if (err != null) {
+      // pass errors along the stream and consume next value
+      push(err)
+      next()
+    }
+
+    // End of stream
+    else if (isNil(it) === true) {
+      // pass nil (end event) along the stream
+      push(null, it)
+    }
+
+    // Data item
+    else {
+      let rowsChunk = it
+
+      // First rows chunk containing header row
+      if (initialized === false) {
+        const srcHeaderRow = rowsChunk[0]
+
+        if (srcHeaderRow == null) {
+          throw new Error('Header row expected is not null')
+        }
+
+        const transformedHeaderRow = initStreamTransform(srcHeaderRow)
+
+        push(null, [transformedHeaderRow])
+
+        // No rows, only header exist
+        if (rowsChunk.length === 1) {
+          next()
+          return
+        }
+
+        rowsChunk = rowsChunk.slice(1)
+      }
+
+      // Row length is changed
+      if (isHeaderExtended) {
+        rowsChunk = rowsChunk.map(row =>
+          row.concat(Array(additionHeadersAdded).fill(''))
+        )
+      }
+
+      rowsChunk = rowsTransformer(rowsChunk)
+
+      // Transform may return an empty list
+      if (rowsChunk.length === 0) {
         next()
+        return
       }
 
-      // End of stream
-      else if (isNil(it) === true) {
-        // pass nil (end event) along the stream
-        push(null, it)
-      }
+      // Remove hidden (deleted) rows from result
+      if (hasHiddenHeaders) {
+        const resultRows: DataRow[] = []
 
-      // data item
-      else {
-        // Not first rows chunk
-        if (initialized) {
-          const transformedRows = rowsTransformer(it)
+        for (const row of rowsChunk) {
+          const resultRow: DataRow = []
 
-          if (transformedRows.length === 0) {
-            return next()
-          } else {
-            push(null, transformedRows)
-            return next()
-          }
-        }
-
-        // first rows chunk
-        else {
-          const headerRow = it[0]
-
-          if (headerRow == null) {
-            throw new Error('Header row expected is not null')
+          for (const [index, h] of transformedHeaders.entries()) {
+            if (h.hidden === false) resultRow.push(row[index])
           }
 
-          const transformedHeaderRow = initStreamTransform(headerRow)
-          push(null, [transformedHeaderRow])
-
-          const lastDataRows = it.slice(1)
-
-          if (lastDataRows.length > 0) {
-            const transformedRows = rowsTransformer(lastDataRows)
-            push(null, transformedRows)
-          }
-
-          return next()
-        }
-      }
-    })
-    .map(rowsChunk => {
-      if (isHeaderReordered === false) return rowsChunk
-
-      const result = []
-
-      for (const srcRow of rowsChunk) {
-        const destRow = []
-
-        for (const h of headerInfo) {
-          destRow.push(srcRow[h.srcIndex])
+          resultRows.push(resultRow)
         }
 
-        result.push(destRow)
+        rowsChunk = resultRows
       }
 
-      return result
-    })
+      push(null, rowsChunk)
+
+      next()
+    }
+  })
 }

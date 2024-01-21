@@ -1,28 +1,12 @@
-import { parse } from 'csv-parse/sync'
-import _H from 'highland'
 import assert from 'node:assert'
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
 import test from 'node:test'
 
 import {
-  DataRow,
+  transformCsvStream,
   RowsTransformerFactory,
-  transformCsvStream
+  row
 } from '../src/index.js'
-import { columnTransform } from '../src/index.js'
-
-const getCaseChunksStream = async (caseName: string, chunkSize: number) => {
-  const CSV_FILE = path.join(process.cwd(), 'test/cases', caseName)
-
-  const csv = await readFile(CSV_FILE, 'utf8')
-
-  const csvLines = parse(csv, { bom: true }) as DataRow[]
-
-  const csvRowsChunks$ = _H(csvLines).batch(chunkSize)
-
-  return csvRowsChunks$
-}
+import { getCaseChunksStream } from './tools/index.js'
 
 test('No-opt transform', async () => {
   const csvRowsChunks$ = await getCaseChunksStream('case1.csv', 100)
@@ -63,9 +47,9 @@ test('columnTransform (basic) #1', async () => {
     {
       headerRowTransforms: [headerInfo => headerInfo],
       dataRowTransforms: [
-        columnTransform({
-          name: 'Наименование',
-          expression: `'Бренд' + " " + 'Наименование'`
+        row.column.transform({
+          columnName: 'Наименование',
+          expression: `'Бренд' & " " & 'Наименование'`
         })
       ]
     },
@@ -94,9 +78,9 @@ test('columnTransform (array) #2', async () => {
     {
       headerRowTransforms: [headerInfo => headerInfo],
       dataRowTransforms: [
-        columnTransform({
-          name: 'List',
-          expression: `row() + ":" + arrayIndex() + if empty(value()) then "" else " - " + value()`
+        row.column.transform({
+          columnName: 'List',
+          expression: `row() & ":" & arrayIndex() & if empty(value()) then "" else " - " & value()`
         })
       ]
     },

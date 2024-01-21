@@ -40,6 +40,10 @@
     "yarn": false
   },
   "author": "Vitaliy V. Makeev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wmakeev/xml-to-csv"
+  },
   "license": "ISC",
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
@@ -51,19 +55,24 @@
     "@typescript-eslint/typescript-estree": "^6.10.0",
     "auto-changelog": "^2.4.0",
     "csv-parse": "^5.5.3",
+    "csv-stringify": "^6.4.5",
+    "decode-html": "^2.0.0",
     "dotenv": "^16.3.1",
     "envalid": "^8.0.0",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.0.1",
+    "exceljs": "^4.4.0",
     "prettier": "^3.1.1",
     "typescript": "^5.3.3",
     "typescript-eslint-language-service": "^5.0.5"
   },
   "dependencies": {
+    "@wmakeev/filtrex": "^4.0.0-2",
     "@wmakeev/highland-tools": "^1.10.0",
-    "filtrex": "^3.0.0",
-    "highland": "^2.13.5"
+    "highland": "^2.13.5",
+    "iconv-lite": "^0.6.3",
+    "undici": "^6.3.0"
   }
 }

@@ -1,2 +1,2 @@
-export * from './rows/index.js'
-export * from './headers/index.js'
+export * as row from './row/index.js'
+export * as header from './header/index.js'

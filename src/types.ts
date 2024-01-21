@@ -1,8 +1,18 @@
 /** Header related info */
 export interface HeaderInfo {
-  /** Source row index */
-  srcIndex: number
+  /**
+   * Source row index or `null` if row not mapped to source
+   */
+  srcIndex: number | null
   name: string
+  hidden: boolean
+}
+
+export interface IternalHeaderInfo extends HeaderInfo {
+  /**
+   * Source row index
+   */
+  srcIndex: number
 }
 
 /** Headers transformer */
@@ -19,7 +29,9 @@ export type HeaderRow = Array<string | undefined>
 export type RowsTransformer = (rowsChunk: DataRow[]) => DataRow[]
 
 /** Create and returns rows transformer */
-export type RowsTransformerFactory = (headers: HeaderInfo[]) => RowsTransformer
+export type RowsTransformerFactory = (
+  headers: IternalHeaderInfo[]
+) => RowsTransformer
 
 export interface CsvTransfromOptions {
   headerRowTransforms: HeadersTransformer[]
