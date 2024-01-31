@@ -2,7 +2,7 @@
   "name": "@wmakeev/csv-transform",
   "version": "0.0.1",
   "type": "module",
-  "description": "Stream csv transformation",
+  "description": "Streaming csv transformation",
   "keywords": [
     "csv",
     "convert",
@@ -42,13 +42,12 @@
   "author": "Vitaliy V. Makeev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wmakeev/xml-to-csv"
+    "url": "https://github.com/wmakeev/csv-transform"
   },
   "license": "ISC",
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
     "@tsconfig/strictest": "^2.0.2",
-    "@types/highland": "^2.12.20",
     "@types/node": "^18.19.3",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
@@ -63,16 +62,11 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.0.1",
-    "exceljs": "^4.4.0",
     "prettier": "^3.1.1",
     "typescript": "^5.3.3",
     "typescript-eslint-language-service": "^5.0.5"
   },
   "dependencies": {
-    "@wmakeev/filtrex": "^4.0.0-2",
-    "@wmakeev/highland-tools": "^1.10.0",
-    "highland": "^2.13.5",
-    "iconv-lite": "^0.6.3",
-    "undici": "^6.3.0"
+    "@wmakeev/filtrex": "^4.0.0-2"
   }
 }

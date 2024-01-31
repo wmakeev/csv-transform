@@ -10,14 +10,16 @@ export interface RenameHeaderParams {
  */
 export const rename = (params: RenameHeaderParams): HeadersTransformer => {
   return headers => {
-    const header = headers.find(h => h.name === params.oldColumnName)
+    const headersToRename = headers.filter(h => h.name === params.oldColumnName)
 
-    if (header === undefined) {
+    if (headersToRename.length === 0) {
       throw new Error(`Header not found - ${params.oldColumnName}`)
     }
 
     // [mutation]
-    header.name = params.newColumnName
+    headersToRename.forEach(h => {
+      h.name = params.newColumnName
+    })
 
     return headers
   }

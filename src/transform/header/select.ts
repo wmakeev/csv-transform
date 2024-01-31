@@ -1,4 +1,4 @@
-import { HeaderInfo, HeadersTransformer } from '../../types.js'
+import { ColumnHeaderMeta, HeadersTransformer } from '../../types.js'
 
 export interface SelectHeadersParams {
   /** Columns that should be selected */
@@ -8,27 +8,31 @@ export interface SelectHeadersParams {
 }
 
 export const select = (params: SelectHeadersParams): HeadersTransformer => {
-  const { columns, keepSrcColumnsOrder } = params
+  const { columns: selectedColumns, keepSrcColumnsOrder } = params
 
-  const selectedColumnsSet = new Set(columns)
+  if (selectedColumns.length === 0) {
+    throw new Error('Select columns not specified')
+  }
 
-  const factory: HeadersTransformer = headerInfos => {
+  const selectedColumnsSet = new Set(selectedColumns)
+
+  const factory: HeadersTransformer = headers => {
     // Keep original columns order
     if (keepSrcColumnsOrder === true) {
-      const selected: HeaderInfo[] = []
-      const other: HeaderInfo[] = []
+      const selected: ColumnHeaderMeta[] = []
+      const other: ColumnHeaderMeta[] = []
 
-      for (const info of headerInfos) {
-        if (selectedColumnsSet.has(info.name)) {
-          if (info.hidden) {
+      for (const header of headers) {
+        if (selectedColumnsSet.has(header.name)) {
+          if (header.hidden) {
             throw new Error(
-              `Column "${info.name}" is deleted and can't be selected`
+              `Column "${header.name}" is deleted and can't be selected`
             )
           }
 
-          selected.push(info)
+          selected.push(header)
         } else {
-          other.push({ ...info, hidden: true })
+          other.push({ ...header, hidden: true })
         }
       }
 
@@ -37,33 +41,41 @@ export const select = (params: SelectHeadersParams): HeadersTransformer => {
 
     // Reorder columns
     else {
-      const selected: HeaderInfo[] = []
-      const other: HeaderInfo[] = []
+      const selected: ColumnHeaderMeta[] = []
+      const notFound: string[] = []
 
-      for (const info of headerInfos) {
-        const selectedIndex = columns.indexOf(info.name)
+      // Get selected headers
+      for (const colName of selectedColumns) {
+        const selectedColHeaders = headers.filter(
+          h => h.name === colName && !h.hidden
+        )
 
-        if (selectedIndex === -1) {
-          other.push({ ...info, hidden: true })
+        if (select.length) {
+          selected.push(...selectedColHeaders)
         } else {
-          if (info.hidden) {
-            throw new Error(
-              `Column "${info.name}" is deleted and can't be selected`
-            )
-          }
-
-          selected[selectedIndex] = info
+          notFound.push(colName)
         }
       }
-
-      const notFound = columns.flatMap((col, index) =>
-        selected[index] === undefined ? col : []
-      )
 
       if (notFound.length) {
         throw new Error(
           `Columns not found - ${notFound.map(c => `"${c}"`).join(', ')}`
         )
+      }
+
+      const other: ColumnHeaderMeta[] = []
+
+      // Get other headers
+      for (const info of headers) {
+        const selectedIndex = selectedColumns.indexOf(info.name)
+
+        if (selectedIndex === -1) {
+          other.push({ ...info, hidden: true })
+        } else if (info.hidden) {
+          throw new Error(
+            `Column "${info.name}" is deleted and can't be selected`
+          )
+        }
       }
 
       return [...selected, ...other]

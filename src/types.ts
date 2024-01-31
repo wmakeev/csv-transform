@@ -1,5 +1,5 @@
 /** Header related info */
-export interface HeaderInfo {
+export interface ColumnHeaderMeta {
   /**
    * Source row index or `null` if row not mapped to source
    */
@@ -8,7 +8,7 @@ export interface HeaderInfo {
   hidden: boolean
 }
 
-export interface IternalHeaderInfo extends HeaderInfo {
+export interface IternalColumnHeaderMeta extends ColumnHeaderMeta {
   /**
    * Source row index
    */
@@ -16,7 +16,9 @@ export interface IternalHeaderInfo extends HeaderInfo {
 }
 
 /** Headers transformer */
-export type HeadersTransformer = (headers: HeaderInfo[]) => HeaderInfo[]
+export type HeadersTransformer = (
+  headers: ColumnHeaderMeta[]
+) => ColumnHeaderMeta[]
 
 /** CSV row */
 export type DataRow = Array<unknown | undefined>
@@ -30,7 +32,7 @@ export type RowsTransformer = (rowsChunk: DataRow[]) => DataRow[]
 
 /** Create and returns rows transformer */
 export type RowsTransformerFactory = (
-  headers: IternalHeaderInfo[]
+  headers: IternalColumnHeaderMeta[]
 ) => RowsTransformer
 
 export interface CsvTransfromOptions {

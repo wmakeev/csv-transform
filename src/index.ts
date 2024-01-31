@@ -1,41 +1,38 @@
-import { isNil } from '@wmakeev/highland-tools'
-
 import {
+  ColumnHeaderMeta,
   CsvTransfromOptions,
   DataRow,
-  HeaderInfo,
-  IternalHeaderInfo,
+  IternalColumnHeaderMeta,
   RowsTransformer
 } from './types.js'
 
-export * from './types.js'
+export * from './mappers/index.js'
+export * from './tools/index.js'
 export * from './transform/index.js'
+export * from './types.js'
 
-export function transformCsvStream(
-  config: CsvTransfromOptions,
-  rowsChunks$: Highland.Stream<DataRow[]>
-) {
+export function createCsvTransformer(config: CsvTransfromOptions) {
   const {
     headerRowTransforms: headerTransforms,
     dataRowTransforms: rowTransformsFactories
   } = config
 
-  let headersInfo: HeaderInfo[]
+  let columnHeadersMeta: ColumnHeaderMeta[]
 
   /** Is source headers is reordered */
-  let isHeadersReordered = false
+  let isHeaderReordered = false
 
-  /** How many headers was added to row (negative value - headers was deleted) */
-  let additionHeadersAdded = 0
+  /** How many columns was added to row (negative value - columns was deleted) */
+  let additionColumsAdded = 0
 
   /** Is new headers was added to header row */
   let isHeaderExtended = false
 
   /** Is some headers is hidden (deleted in result output) */
-  let hasHiddenHeaders = false
+  let hasHiddenColumns = false
 
   let rowsTransformer: RowsTransformer
-  let transformedHeaders: IternalHeaderInfo[]
+  let transformedHeaders: IternalColumnHeaderMeta[]
 
   let initialized = false
 
@@ -48,7 +45,7 @@ export function transformCsvStream(
   const initStreamTransform = (srcHeaderRow: DataRow) => {
     let lastColIndex = srcHeaderRow.length - 1
 
-    headersInfo = srcHeaderRow.flatMap((h, index) => {
+    columnHeadersMeta = srcHeaderRow.flatMap((h, index) => {
       if (h === '' || h == null) return []
 
       return {
@@ -61,30 +58,30 @@ export function transformCsvStream(
     // Transform headers with headers transformers
     for (const headerTransform of headerTransforms) {
       transformedHeaders = headerTransform(
-        transformedHeaders ?? (headersInfo as IternalHeaderInfo[])
-      ) as IternalHeaderInfo[]
+        transformedHeaders ?? (columnHeadersMeta as IternalColumnHeaderMeta[])
+      ) as IternalColumnHeaderMeta[]
     }
 
     // Set default headerInfo if no transforms
     if (transformedHeaders == null) {
-      transformedHeaders = headersInfo as IternalHeaderInfo[]
+      transformedHeaders = columnHeadersMeta as IternalColumnHeaderMeta[]
     }
 
     // Fill indexes for new columns
     for (const h of transformedHeaders) {
       if (h.srcIndex == null) h.srcIndex = ++lastColIndex
-      if (h.hidden) hasHiddenHeaders = true
+      if (h.hidden) hasHiddenColumns = true
     }
 
-    isHeadersReordered = transformedHeaders.every(
+    isHeaderReordered = transformedHeaders.every(
       (h, index) => h.srcIndex !== index
     )
 
-    additionHeadersAdded = transformedHeaders.length - srcHeaderRow.length
+    additionColumsAdded = transformedHeaders.length - srcHeaderRow.length
 
-    isHeaderExtended = additionHeadersAdded > 0
+    isHeaderExtended = additionColumsAdded > 0
 
-    const shouldRearrangeRow = isHeadersReordered || isHeaderExtended
+    const shouldRearrangeRow = isHeaderReordered || isHeaderExtended
 
     /** Initialized rows transforms */
     const rowTransforms = rowTransformsFactories.map(f => f(transformedHeaders))
@@ -136,24 +133,10 @@ export function transformCsvStream(
     return result
   }
 
-  return rowsChunks$.consume<DataRow[]>((err, it, push, next) => {
-    // Error
-    if (err != null) {
-      // pass errors along the stream and consume next value
-      push(err)
-      next()
-    }
-
-    // End of stream
-    else if (isNil(it) === true) {
-      // pass nil (end event) along the stream
-      push(null, it)
-    }
-
-    // Data item
-    else {
-      let rowsChunk = it
-
+  return async function* (
+    source: Iterable<DataRow[]> | AsyncIterable<DataRow[]>
+  ) {
+    for await (let rowsChunk of source) {
       // First rows chunk containing header row
       if (initialized === false) {
         const srcHeaderRow = rowsChunk[0]
@@ -164,34 +147,30 @@ export function transformCsvStream(
 
         const transformedHeaderRow = initStreamTransform(srcHeaderRow)
 
-        push(null, [transformedHeaderRow])
+        yield [transformedHeaderRow]
 
         // No rows, only header exist
-        if (rowsChunk.length === 1) {
-          next()
-          return
-        }
+        if (rowsChunk.length === 1) continue
 
         rowsChunk = rowsChunk.slice(1)
       }
 
       // Row length is changed
       if (isHeaderExtended) {
-        rowsChunk = rowsChunk.map(row =>
-          row.concat(Array(additionHeadersAdded).fill(''))
-        )
+        const emptyHeaders = Array(additionColumsAdded).fill('')
+
+        for (const row of rowsChunk) {
+          row.push(...emptyHeaders)
+        }
       }
 
       rowsChunk = rowsTransformer(rowsChunk)
 
       // Transform may return an empty list
-      if (rowsChunk.length === 0) {
-        next()
-        return
-      }
+      if (rowsChunk.length === 0) continue
 
       // Remove hidden (deleted) rows from result
-      if (hasHiddenHeaders) {
+      if (hasHiddenColumns) {
         const resultRows: DataRow[] = []
 
         for (const row of rowsChunk) {
@@ -207,9 +186,7 @@ export function transformCsvStream(
         rowsChunk = resultRows
       }
 
-      push(null, rowsChunk)
-
-      next()
+      yield rowsChunk
     }
-  })
+  }
 }
