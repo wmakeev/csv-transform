@@ -12,20 +12,18 @@ import test from 'node:test'
 import {
   ChunkTransform,
   FlattenTransform,
-  RowsTransformerFactory,
   createCsvTransformer,
   row
 } from '../src/index.js'
 
 test('No-opt transform', async () => {
-  const rowsTransformerFactory: RowsTransformerFactory = headerInfos => {
-    headerInfos
-    return rows => rows
-  }
-
   const csvTransformer = createCsvTransformer({
     headerRowTransforms: [headerInfo => headerInfo],
-    dataRowTransforms: [rowsTransformerFactory]
+    dataRowTransforms: [
+      () => {
+        return rows => rows
+      }
+    ]
   })
 
   const transformedRowsStream: Readable = compose(
