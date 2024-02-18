@@ -66,7 +66,7 @@
     "typescript-eslint-language-service": "^5.0.5"
   },
   "dependencies": {
-    "decode-html": "^2.0.0",
-    "@wmakeev/filtrex": "^4.0.0-2"
+    "@wmakeev/filtrex": "^4.0.0-3",
+    "decode-html": "^2.0.0"
   }
 }

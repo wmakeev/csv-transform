@@ -1,4 +1,8 @@
 import {
+  generateColumnNumHeader,
+  generateExcelStyleHeader
+} from './tools/headers.js'
+import {
   ColumnHeaderMeta,
   CsvTransfromOptions,
   DataRow,
@@ -14,10 +18,13 @@ export * from './types.js'
 export function createCsvTransformer(config: CsvTransfromOptions) {
   const {
     headerRowTransforms: headerTransforms,
-    dataRowTransforms: rowTransformsFactories
+    dataRowTransforms: rowTransformsFactories,
+    prependHeaders
   } = config
 
   let columnHeadersMeta: ColumnHeaderMeta[]
+
+  const isHeaderPrepended = prependHeaders != null
 
   /** Is source headers is reordered */
   let isHeaderReordered = false
@@ -139,20 +146,35 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
     for await (let rowsChunk of source) {
       // First rows chunk containing header row
       if (initialized === false) {
-        const srcHeaderRow = rowsChunk[0]
+        if (rowsChunk[0] == null) {
+          throw new Error('Empty or incorrect rows chunk')
+        }
 
-        if (srcHeaderRow == null) {
-          throw new Error('Header row expected is not null')
+        const firstRow = rowsChunk[0]
+
+        if (firstRow.length === 0) {
+          throw new Error('No columns in row')
+        }
+
+        let srcHeaderRow: DataRow
+
+        // No header. Header should be generated and prepended.
+        if (isHeaderPrepended) {
+          srcHeaderRow =
+            prependHeaders === 'EXCEL_STYLE'
+              ? generateExcelStyleHeader(firstRow.length)
+              : generateColumnNumHeader(firstRow.length)
+        }
+
+        // Header should exist. Extract header from first row.
+        else {
+          srcHeaderRow = rowsChunk[0]
+          rowsChunk = rowsChunk.slice(1)
         }
 
         const transformedHeaderRow = initStreamTransform(srcHeaderRow)
 
         yield [transformedHeaderRow]
-
-        // No rows, only header exist
-        if (rowsChunk.length === 1) continue
-
-        rowsChunk = rowsChunk.slice(1)
       }
 
       // Row length is changed
