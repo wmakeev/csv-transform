@@ -1,15 +1,15 @@
 import assert from 'node:assert'
+import {
+  Readable,
+  // @ts-expect-error no typings for compose
+  compose
+} from 'node:stream'
 import test from 'node:test'
 import {
   ChunkTransform,
   FlattenTransform,
   createCsvTransformer
 } from '../src/index.js'
-import {
-  Readable,
-  // @ts-expect-error no typings for compose
-  compose
-} from 'node:stream'
 
 test('Prepend Excel style header', async () => {
   const srcData = [
