@@ -1,3 +1,4 @@
+import * as num from './num/tryParseInt.js'
 import { vlookup } from './vlookup.js'
 
 export const functions = {
@@ -66,17 +67,7 @@ export const functions = {
     }
   },
 
-  'num:tryParseInt': (num: unknown, defaultValue = '') => {
-    if (typeof num === 'number') {
-      return num
-    } else if (typeof num === 'string') {
-      const parsed = Number.parseInt(num)
-      if (Number.isNaN(parsed)) return defaultValue
-      return parsed
-    } else {
-      return defaultValue
-    }
-  },
+  'num:tryParseInt': num.tryParseInt,
 
   'date:toJson': (date: unknown) => {
     if (date instanceof Date) {
@@ -90,5 +81,25 @@ export const functions = {
 
   'array:at': (arr: unknown[], index: number) => {
     return arr.at(index)
+  },
+
+  'tools:getTabSize': (str: unknown, tab = ' ') => {
+    if (typeof str !== 'string') return 0
+
+    let spaces = 0
+
+    let _str = str
+
+    while (_str.startsWith(tab)) {
+      spaces++
+      _str = _str.slice(tab.length)
+    }
+
+    return spaces
+  },
+
+  'tools:removeExtraSpaces': (str: unknown) => {
+    if (typeof str !== 'string') return str
+    return str.replaceAll(/\s{2,}/g, ' ')
   }
 }
