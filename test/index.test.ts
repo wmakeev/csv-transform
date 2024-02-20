@@ -1,5 +1,6 @@
-import './tools/index.js'
 import './case1.test.js'
 import './case2.test.js'
 import './case3.test.js'
 import './case4.test.js'
+import './functions.test.js'
+import './tools/index.js'
