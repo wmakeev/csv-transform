@@ -1,7 +1,12 @@
-import * as num from './num/tryParseInt.js'
+import * as num from './num/index.js'
+import * as arr from './arr/index.js'
 import { vlookup } from './vlookup.js'
+import { neq } from './neq.js'
+import { fpFunctions } from './fp/index.js'
 
 export const functions = {
+  ...fpFunctions,
+
   'typeof': (val: unknown) => {
     return Object.prototype.toString
       .call(val)
@@ -11,6 +16,10 @@ export const functions = {
   },
 
   'table:vlookup': vlookup,
+
+  'neq': neq,
+
+  'arr:filter': arr.filter,
 
   'str:trim': (val: unknown) => {
     if (typeof val === 'string') return val.trim()
@@ -68,6 +77,8 @@ export const functions = {
   },
 
   'num:tryParseInt': num.tryParseInt,
+  'num:max': num.max,
+  'num:min': num.min,
 
   'date:toJson': (date: unknown) => {
     if (date instanceof Date) {
