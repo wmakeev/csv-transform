@@ -48,21 +48,7 @@ export const functions = {
     return String(str).split(String(separator))
   },
 
-  'num:toFixed': (
-    num: unknown,
-    fractionDigits = 0,
-    defaultValue: unknown = 0
-  ) => {
-    if (typeof num === 'number') {
-      return num.toFixed(fractionDigits)
-    } else if (typeof num === 'string') {
-      const parsed = Number.parseFloat(num)
-      if (Number.isNaN(parsed)) return defaultValue
-      return parsed.toFixed(fractionDigits)
-    } else {
-      return defaultValue
-    }
-  },
+  'num:toFixed': num.toFixed,
 
   'num:tryParseFloat': (num: unknown, defaultValue = '') => {
     if (typeof num === 'number') {
@@ -94,6 +80,7 @@ export const functions = {
     return arr.at(index)
   },
 
+  // TODO Переименовать str:getLeftPad(...)
   'tools:getTabSize': (str: unknown, tab = ' ') => {
     if (typeof str !== 'string') return 0
 
@@ -109,6 +96,7 @@ export const functions = {
     return spaces
   },
 
+  // TODO Переименовать str:removeExtraSpaces(...)
   'tools:removeExtraSpaces': (str: unknown) => {
     if (typeof str !== 'string') return str
     return str.replaceAll(/\s{2,}/g, ' ')

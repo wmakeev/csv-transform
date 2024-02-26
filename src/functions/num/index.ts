@@ -15,3 +15,22 @@ export const max = (vals: unknown[]) => {
   const nums = vals.filter(n => Number.isFinite(n)) as number[]
   return Math.max(...nums)
 }
+
+// TODO Убрать defaultValue, использовать tryParse..
+export const toFixed = (
+  num: unknown,
+  fractionDigits = 0,
+  defaultValue: unknown = 0
+) => {
+  if (typeof num === 'number') {
+    return num.toFixed(fractionDigits)
+  } else if (typeof num === 'string') {
+    const parsed = Number.parseFloat(num)
+    if (Number.isNaN(parsed)) return defaultValue
+    return parsed.toFixed(fractionDigits)
+  } else {
+    return defaultValue
+  }
+}
+
+// TODO num:round(num, 2)

@@ -1,4 +1,5 @@
 import * as arr from '../arr/index.js'
+import * as num from '../num/index.js'
 import { neq } from '../neq.js'
 
 export const filter = (b: unknown) => {
@@ -12,5 +13,9 @@ export const fpFunctions = {
 
   'fp:neq': (b: unknown) => {
     return (a: unknown) => neq(a, b)
-  }
+  },
+
+  'fp:num:toFixed':
+    (fractionDigits: number, defaultValue?: unknown) => (num_: unknown) =>
+      num.toFixed(num_, fractionDigits, defaultValue)
 }
