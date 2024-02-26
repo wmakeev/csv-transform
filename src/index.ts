@@ -80,7 +80,7 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
       if (h.hidden) hasHiddenColumns = true
     }
 
-    isHeaderReordered = transformedHeaders.every(
+    isHeaderReordered = transformedHeaders.some(
       (h, index) => h.srcIndex !== index
     )
 
@@ -94,8 +94,6 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
     const rowTransforms = rowTransformsFactories.map(f => f(transformedHeaders))
 
     rowsTransformer = rowsChunks => {
-      if (rowTransforms.length === 0) return rowsChunks
-
       let transformedChunk: DataRow[] = rowsChunks
 
       for (const rowTransform of rowTransforms) {

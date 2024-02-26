@@ -50,7 +50,7 @@ export const select = (params: SelectHeadersParams): HeadersTransformer => {
           h => h.name === colName && !h.hidden
         )
 
-        if (select.length) {
+        if (selectedColHeaders.length) {
           selected.push(...selectedColHeaders)
         } else {
           notFound.push(colName)
