@@ -54,7 +54,9 @@ export const functions = {
     if (typeof num === 'number') {
       return num
     } else if (typeof num === 'string') {
-      const parsed = Number.parseFloat(num)
+      const parsed = Number.parseFloat(
+        num.replaceAll(',', '.').replaceAll(' ', '')
+      )
       if (Number.isNaN(parsed)) return defaultValue
       return parsed
     } else {
