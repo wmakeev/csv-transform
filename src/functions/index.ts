@@ -3,6 +3,7 @@ import * as arr from './arr/index.js'
 import { vlookup } from './vlookup.js'
 import { neq } from './neq.js'
 import { fpFunctions } from './fp/index.js'
+import { UNICODE_SPACES_REGEX } from '../../test/tools/index.js'
 
 export const functions = {
   ...fpFunctions,
@@ -55,7 +56,7 @@ export const functions = {
       return num
     } else if (typeof num === 'string') {
       const parsed = Number.parseFloat(
-        num.replaceAll(',', '.').replaceAll(' ', '')
+        num.replaceAll(',', '.').replaceAll(UNICODE_SPACES_REGEX, '')
       )
       if (Number.isNaN(parsed)) return defaultValue
       return parsed

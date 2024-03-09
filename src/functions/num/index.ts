@@ -1,3 +1,5 @@
+import { UNICODE_SPACES_REGEX } from '../../../test/tools/index.js'
+
 export * from './tryParseInt.js'
 
 export const min = (vals: unknown[]) => {
@@ -26,7 +28,7 @@ export const toFixed = (
     return num.toFixed(fractionDigits)
   } else if (typeof num === 'string') {
     const parsed = Number.parseFloat(
-      num.replaceAll(',', '.').replaceAll(' ', '')
+      num.replaceAll(',', '.').replaceAll(UNICODE_SPACES_REGEX, '')
     )
     if (Number.isNaN(parsed)) return defaultValue
     return parsed.toFixed(fractionDigits)
