@@ -1,9 +1,9 @@
-import * as num from './num/index.js'
+import { UNICODE_SPACES_REGEX } from '../index.js'
 import * as arr from './arr/index.js'
-import { vlookup } from './vlookup.js'
-import { neq } from './neq.js'
 import { fpFunctions } from './fp/index.js'
-import { UNICODE_SPACES_REGEX } from '../../test/tools/index.js'
+import { neq } from './neq.js'
+import * as num from './num/index.js'
+import { vlookup } from './vlookup.js'
 
 export const functions = {
   ...fpFunctions,

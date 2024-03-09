@@ -1,4 +1,4 @@
-import { UNICODE_SPACES_REGEX } from '../../../test/tools/index.js'
+import { UNICODE_SPACES_REGEX } from '../../index.js'
 
 export function tryParseInt(num: unknown, defaultValue = '') {
   if (typeof num === 'number') {

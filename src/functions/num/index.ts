@@ -1,4 +1,4 @@
-import { UNICODE_SPACES_REGEX } from '../../../test/tools/index.js'
+import { UNICODE_SPACES_REGEX } from '../../index.js'
 
 export * from './tryParseInt.js'
 
