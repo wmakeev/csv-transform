@@ -99,6 +99,7 @@ test('barcode', async () => {
   const srcData = [
     ['value', 'result'],
     ['4850001392774', ''],
+    [4850001392774, ''],
     ['4850001392773', ''],
     ['20000059', ''],
     ['40099644', ''],
@@ -133,6 +134,7 @@ test('barcode', async () => {
   assert.deepEqual(transformedRows, [
     ['value', 'result'],
     ['4850001392774', true],
+    [4850001392774, true],
     ['4850001392773', false],
     ['20000059', true],
     ['40099644', true],

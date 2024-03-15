@@ -3,7 +3,9 @@
  *
  * @link https://github.com/hampus-nilsson/gs1-checkdigit/blob/main/checkdigit.js
  */
-export function isGTIN(input: string): boolean {
+export function isGTIN(val: unknown): boolean {
+  const input = String(val)
+
   if (![8, 12, 13, 14].includes(input.length)) return false
 
   const digs = input.split('').reverse()
@@ -11,10 +13,7 @@ export function isGTIN(input: string): boolean {
   let total = 0
 
   for (let i = 1; i < digs.length; i++) {
-    const num = parseInt(
-      // @ts-expect-error skip
-      digs[i]
-    )
+    const num = parseInt(digs[i]!)
 
     if (Number.isNaN(num)) return false
 
