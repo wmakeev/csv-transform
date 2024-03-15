@@ -37,11 +37,8 @@ test('num', async () => {
 
   const transformedRowsStream: Readable = compose(
     srcData.values(),
-
     new ChunkTransform({ batchSize: 10 }),
-
     csvTransformer,
-
     new FlattenTransform()
   )
 
@@ -95,5 +92,97 @@ test('fp functions', async () => {
   assert.deepEqual(transformedRows, [
     ['case', 'value'],
     ['1', 2]
+  ])
+})
+
+test('barcode', async () => {
+  const srcData = [
+    ['value', 'result'],
+    ['4850001392774', ''],
+    ['4850001392773', ''],
+    ['20000059', ''],
+    ['40099644', ''],
+    ['57027906'],
+    ['57027905'],
+    ['4603224167731.', ''],
+    ['46 032241 67731', ''],
+    ['', '']
+  ]
+
+  const csvTransformer = createCsvTransformer({
+    headerRowTransforms: [headerInfo => headerInfo],
+    dataRowTransforms: [
+      row.column.transform({
+        columnName: 'result',
+        expression: `
+          barcode:isGTIN('value')
+        `
+      })
+    ]
+  })
+
+  const transformedRowsStream: Readable = compose(
+    srcData.values(),
+    new ChunkTransform({ batchSize: 10 }),
+    csvTransformer,
+    new FlattenTransform()
+  )
+
+  const transformedRows = await transformedRowsStream.toArray()
+
+  assert.deepEqual(transformedRows, [
+    ['value', 'result'],
+    ['4850001392774', true],
+    ['4850001392773', false],
+    ['20000059', true],
+    ['40099644', true],
+    ['57027906', true],
+    ['57027905', false],
+    ['4603224167731.', false],
+    ['46 032241 67731', false],
+    ['', false]
+  ])
+})
+
+test('tools', async () => {
+  const srcData = [
+    ['value', 'result'],
+    ['48 5 00013 92774', ''],
+    ['sj1kjsd2kd 3d+-456 jasd7', ''],
+    ['sdf 12 d\ndd3  433\n', ''],
+    [123, ''],
+    [true, ''],
+    ['', '']
+  ]
+
+  const csvTransformer = createCsvTransformer({
+    headerRowTransforms: [headerInfo => headerInfo],
+    dataRowTransforms: [
+      row.column.transform({
+        columnName: 'result',
+        expression: `
+          str:extractNums('value')
+        `
+      })
+    ]
+  })
+
+  const transformedRowsStream: Readable = compose(
+    srcData.values(),
+    new ChunkTransform({ batchSize: 10 }),
+    csvTransformer,
+    new FlattenTransform()
+  )
+
+  const transformedRows = await transformedRowsStream.toArray()
+
+  assert.deepEqual(transformedRows, [
+    ['value', 'result'],
+    ['48 5 00013 92774', '4850001392774'],
+    ['sj1kjsd2kd 3d+-456 jasd7', '1234567'],
+    ['sdf 12 d\ndd3  433\n', '123433'],
+    [123, 123],
+    [true, true],
+    ['', '']
   ])
 })

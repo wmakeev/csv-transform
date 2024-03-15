@@ -1,8 +1,10 @@
 import { UNICODE_SPACES_REGEX } from '../index.js'
 import * as arr from './arr/index.js'
+import * as barcode from './barcode/index.js'
 import { fpFunctions } from './fp/index.js'
 import { neq } from './neq.js'
 import * as num from './num/index.js'
+import * as str from './str/index.js'
 import { vlookup } from './vlookup.js'
 
 export const functions = {
@@ -48,6 +50,8 @@ export const functions = {
   'str:split': (str: unknown, separator: unknown) => {
     return String(str).split(String(separator))
   },
+
+  'str:extractNums': str.extractNums,
 
   'num:toFixed': num.toFixed,
 
@@ -103,5 +107,7 @@ export const functions = {
   'tools:removeExtraSpaces': (str: unknown) => {
     if (typeof str !== 'string') return str
     return str.replaceAll(/\s{2,}/g, ' ')
-  }
+  },
+
+  'barcode:isGTIN': barcode.isGTIN
 }
