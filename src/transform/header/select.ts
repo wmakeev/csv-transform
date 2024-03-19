@@ -24,7 +24,7 @@ export const select = (params: SelectHeadersParams): HeadersTransformer => {
 
       for (const header of headers) {
         if (selectedColumnsSet.has(header.name)) {
-          if (header.hidden) {
+          if (header.deleted) {
             throw new Error(
               `Column "${header.name}" is deleted and can't be selected`
             )
@@ -32,7 +32,7 @@ export const select = (params: SelectHeadersParams): HeadersTransformer => {
 
           selected.push(header)
         } else {
-          other.push({ ...header, hidden: true })
+          other.push({ ...header, deleted: true })
         }
       }
 
@@ -47,7 +47,7 @@ export const select = (params: SelectHeadersParams): HeadersTransformer => {
       // Get selected headers
       for (const colName of selectedColumns) {
         const selectedColHeaders = headers.filter(
-          h => h.name === colName && !h.hidden
+          h => h.name === colName && !h.deleted
         )
 
         if (selectedColHeaders.length) {
@@ -70,8 +70,8 @@ export const select = (params: SelectHeadersParams): HeadersTransformer => {
         const selectedIndex = selectedColumns.indexOf(info.name)
 
         if (selectedIndex === -1) {
-          other.push({ ...info, hidden: true })
-        } else if (info.hidden) {
+          other.push({ ...info, deleted: true })
+        } else if (info.deleted) {
           throw new Error(
             `Column "${info.name}" is deleted and can't be selected`
           )

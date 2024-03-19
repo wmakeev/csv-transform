@@ -12,7 +12,7 @@ import {
   header
 } from '../../../src/index.js'
 
-test('select transform', async () => {
+test('select header transform', async () => {
   const csvTransformer = createCsvTransformer({
     headerRowTransforms: [
       header.select({

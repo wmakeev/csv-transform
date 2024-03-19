@@ -35,8 +35,8 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
   /** Is new headers was added to header row */
   let isHeaderExtended = false
 
-  /** Is some headers is hidden (deleted in result output) */
-  let hasHiddenColumns = false
+  /** Is some headers is deleted (should be removed in result output) */
+  let hasDeletedColumns = false
 
   let rowsTransformer: RowsTransformer
   let transformedHeaders: IternalColumnHeaderMeta[]
@@ -55,11 +55,13 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
     columnHeadersMeta = srcHeaderRow.flatMap((h, index) => {
       if (h === '' || h == null) return []
 
-      return {
+      const colMeta: ColumnHeaderMeta = {
         srcIndex: index,
         name: String(h),
-        hidden: false
+        deleted: false
       }
+
+      return colMeta
     })
 
     // Transform headers with headers transformers
@@ -77,7 +79,7 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
     // Fill indexes for new columns
     for (const h of transformedHeaders) {
       if (h.srcIndex == null) h.srcIndex = ++lastColIndex
-      if (h.hidden) hasHiddenColumns = true
+      if (h.deleted) hasDeletedColumns = true
     }
 
     isHeaderReordered = transformedHeaders.some(
@@ -128,7 +130,7 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
     initialized = true
 
     const result = [...transformedHeaders]
-      .filter(it => it.hidden === false)
+      .filter(it => it.deleted === false)
       .map(it => it.name) as DataRow
 
     if (result.length === 0) {
@@ -189,15 +191,15 @@ export function createCsvTransformer(config: CsvTransfromOptions) {
       // Transform may return an empty list
       if (rowsChunk.length === 0) continue
 
-      // Remove hidden (deleted) rows from result
-      if (hasHiddenColumns) {
+      // Remove deleted rows from result
+      if (hasDeletedColumns) {
         const resultRows: DataRow[] = []
 
         for (const row of rowsChunk) {
           const resultRow: DataRow = []
 
           for (const [index, h] of transformedHeaders.entries()) {
-            if (h.hidden === false) resultRow.push(row[index])
+            if (h.deleted === false) resultRow.push(row[index])
           }
 
           resultRows.push(resultRow)

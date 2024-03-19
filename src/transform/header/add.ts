@@ -2,7 +2,6 @@ import { HeadersTransformer } from '../../index.js'
 
 export interface AddHeaderParams {
   columnName: string
-  hidden?: boolean
 }
 
 /**
@@ -15,7 +14,7 @@ export const add = (params: AddHeaderParams): HeadersTransformer => {
       {
         srcIndex: null,
         name: params.columnName,
-        hidden: params.hidden ?? false
+        deleted: false
       }
     ]
   }

@@ -28,8 +28,7 @@ test('complex transform #3', async () => {
         columnName: 'NewCol 1'
       }),
       header.add({
-        columnName: '_new_col 2',
-        hidden: true
+        columnName: '_new_col 2'
       }),
       header.rename({
         oldColumnName: 'Some',

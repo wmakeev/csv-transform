@@ -5,7 +5,7 @@ export interface ColumnHeaderMeta {
    */
   srcIndex: number | null
   name: string
-  hidden: boolean
+  deleted: boolean
 }
 
 export interface IternalColumnHeaderMeta extends ColumnHeaderMeta {
