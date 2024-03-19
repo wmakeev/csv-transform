@@ -13,6 +13,7 @@ import {
   ChunkTransform,
   FlattenTransform,
   createCsvTransformer,
+  header,
   row
 } from '../src/index.js'
 
@@ -51,4 +52,80 @@ test('column transform (array) #2', async () => {
     ['3', 'Emoji', '😀 Text 💯 Текст', '3:0', '3:1', '', '3:2', '30'],
     ['4', 'Integer', '1000', '4:0', '4:1', '', '4:2', '15']
   ])
+})
+
+test('column transform (values)', async () => {
+  const csvTransformer = createCsvTransformer({
+    headerRowTransforms: [
+      header.add({
+        columnName: 'Value1'
+      }),
+
+      header.add({
+        columnName: 'Value2'
+      }),
+
+      header.add({
+        columnName: 'Values1'
+      }),
+
+      header.add({
+        columnName: 'Values2'
+      }),
+
+      header.select({
+        columns: ['Value1', 'Value2', 'Values1', 'Values2']
+      })
+    ],
+    dataRowTransforms: [
+      row.column.transform({
+        columnName: 'Value1',
+        expression: `value("Num")`
+      }),
+
+      row.column.transform({
+        columnName: 'Value2',
+        expression: `value("List")`
+      }),
+
+      row.column.transform({
+        columnName: 'Values1',
+        expression: `values("Num")`
+      }),
+
+      row.column.transform({
+        columnName: 'Values2',
+        expression: `values("List")`
+      })
+    ]
+  })
+
+  const transformedRowsStream: Readable = compose(
+    createReadStream(path.join(process.cwd(), 'test/cases/case2.csv'), {
+      highWaterMark: 16 * 1024,
+      encoding: 'utf8'
+    }),
+
+    parse({ bom: true }),
+
+    new ChunkTransform({ batchSize: 100 }),
+
+    csvTransformer,
+
+    new FlattenTransform()
+  )
+
+  const transformedRows = await transformedRowsStream.take(5).toArray()
+
+  assert.deepEqual(
+    transformedRows,
+    /* prettier-ignore */
+    [
+      ['Value1', 'Value2', 'Values1', 'Values2' ],
+      ['10'    , 'One'   , '10'     , 'One,2,3️⃣'],
+      ['20'    , ''      , '20'     , ',,'      ],
+      ['30'    , ''      , '30'     , ',,'      ],
+      ['15'    , ''      , '15'     , ',,'      ]
+    ]
+  )
 })

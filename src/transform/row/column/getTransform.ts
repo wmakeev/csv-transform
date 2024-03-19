@@ -58,11 +58,30 @@ export const getTransform =
 
     const transform = compileExpression(params.expression, {
       extraFunctions: {
-        value: () => {
-          const index = globalState.fieldIndexesByName.get(params.columnName)?.[
-            globalState.arrColIndex
-          ]
+        value: (columnName: unknown) => {
+          if (columnName != null && typeof columnName !== 'string') {
+            throw new Error('values() argument expected to be string')
+          }
+
+          const index = globalState.fieldIndexesByName.get(
+            columnName ?? params.columnName
+          )?.[globalState.arrColIndex]
+
           return index === undefined ? '' : globalState.curRow[index] ?? ''
+        },
+
+        values: (columnName: unknown) => {
+          if (columnName != null && typeof columnName !== 'string') {
+            throw new Error('values() argument expected to be string')
+          }
+
+          const index = globalState.fieldIndexesByName.get(
+            columnName ?? params.columnName
+          )
+
+          if (index === undefined) return ''
+
+          return index.map(i => globalState.curRow[i] ?? '')
         },
 
         row: () => globalState.rowNum,
